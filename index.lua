@@ -1335,6 +1335,221 @@ NGPC = "app0:/mednafen_ngp_libretro.self",
 PS1 = "app0:/pcsx_rearmed_libretro.self",
 }
 
+-- BEGIN EMU4VITA_PATCH: per-category Emu4Vita++ core names
+emu4_core = {
+SNES = "snes9x2005_plus",
+NES = "fceumm",
+GBA = "gpsp",
+GBC = "gambatte",
+GB = "gambatte",
+SEGA_CD = "genesis_plus_gx",
+s32X = "picodrive",
+MD = "genesis_plus_gx",
+SMS = "genesis_plus_gx",
+GG = "genesis_plus_gx",
+TG16 = "mednafen_pce_fast",
+TGCD = "mednafen_pce_fast",
+PCE = "mednafen_pce_fast",
+PCECD = "mednafen_pce_fast",
+AMIGA = "uae4arm",
+C64 = "vice",
+WSWAN_COL = "mednafen_wswan",
+WSWAN = "mednafen_wswan",
+MSX2 = "fmsx",
+MSX1 = "fmsx",
+ZXS = "fuse",
+ATARI_7800 = "prosystem",
+ATARI_5200 = "atari800",
+ATARI_2600 = "stella2014",
+ATARI_LYNX = "handy",
+COLECOVISION = "bluemsx",
+VECTREX = "vecx",
+FBA = "fba_lite",
+MAME_2003_PLUS = "mame2003_plus",
+MAME_2000 = "mame2000",
+NEOGEO = "fba_lite",
+NGPC = "mednafen_ngp",
+PS1 = "pcsx_rearmed",
+}
+
+emu4_default_core = {}
+for k, v in pairs(emu4_core) do
+    emu4_default_core[k] = v
+end
+
+emu4_platforms = {
+{ key = "SNES", label = "Super Nintendo" },
+{ key = "NES", label = "Nintendo NES" },
+{ key = "GBA", label = "Game Boy Advance" },
+{ key = "GBC", label = "Game Boy Color" },
+{ key = "GB", label = "Game Boy" },
+{ key = "SEGA_CD", label = "Sega CD" },
+{ key = "s32X", label = "Sega 32X" },
+{ key = "MD", label = "Mega Drive / Genesis" },
+{ key = "SMS", label = "Master System" },
+{ key = "GG", label = "Game Gear" },
+{ key = "TG16", label = "TurboGrafx-16" },
+{ key = "TGCD", label = "TurboGrafx-CD" },
+{ key = "PCE", label = "PC Engine" },
+{ key = "PCECD", label = "PC Engine CD" },
+{ key = "AMIGA", label = "Amiga" },
+{ key = "C64", label = "Commodore 64" },
+{ key = "WSWAN_COL", label = "WonderSwan Color" },
+{ key = "WSWAN", label = "WonderSwan" },
+{ key = "MSX2", label = "MSX2" },
+{ key = "MSX1", label = "MSX1" },
+{ key = "ZXS", label = "ZX Spectrum" },
+{ key = "ATARI_7800", label = "Atari 7800" },
+{ key = "ATARI_5200", label = "Atari 5200" },
+{ key = "ATARI_2600", label = "Atari 2600" },
+{ key = "ATARI_LYNX", label = "Atari Lynx" },
+{ key = "COLECOVISION", label = "ColecoVision" },
+{ key = "VECTREX", label = "Vectrex" },
+{ key = "FBA", label = "FinalBurn Alpha" },
+{ key = "MAME_2003_PLUS", label = "MAME 2003 Plus" },
+{ key = "MAME_2000", label = "MAME 2000" },
+{ key = "NEOGEO", label = "Neo Geo" },
+{ key = "NGPC", label = "Neo Geo Pocket Color" },
+{ key = "PS1", label = "PlayStation" },
+}
+
+emu4_available_cores = {
+"atari800",
+"bluemsx",
+"cap32",
+"chimerasnes",
+"crocods",
+"dosbox_pure",
+"fba_lite",
+"fbalpha2012",
+"fbneo",
+"fceumm",
+"fmsx",
+"fuse",
+"gambatte",
+"genesis_plus_gx",
+"genesis_plus_gx_wide",
+"gpsp",
+"handy",
+"km_fbneo_xtreme_amped",
+"km_mame2003_xtreme_amped",
+"mame2000",
+"mame2003",
+"mame2003_plus",
+"mednafen_lynx",
+"mednafen_ngp",
+"mednafen_pce_fast",
+"mednafen_supafaust",
+"mednafen_supergrafx",
+"mednafen_wswan",
+"mgba",
+"nekop2",
+"neocd",
+"nestopia",
+"np2kai",
+"pcsx_rearmed",
+"picodrive",
+"prosystem",
+"px68k",
+"snes9x",
+"snes9x2005_plus",
+"stella2014",
+"tgbdual",
+"uae4arm",
+"vba_next",
+"vecx",
+"vice",
+}
+
+emu4_selected_platform = 1
+emu4_core_map_path = cur_dir .. "/emu4vita_core_map.lua"
+
+function save_emu4_core_map()
+    local file_map = assert(io.open(emu4_core_map_path, "w"), "Failed to open emu4vita_core_map.lua")
+    file_map:write("return {\n")
+    for i, platform in ipairs(emu4_platforms) do
+        file_map:write(platform.key .. " = \"" .. tostring(emu4_core[platform.key]) .. "\",\n")
+    end
+    file_map:write("}\n")
+    file_map:close()
+end
+
+function load_emu4_core_map()
+    if not System.doesFileExist(emu4_core_map_path) then
+        save_emu4_core_map()
+        return
+    end
+
+    local ok, user_map = pcall(dofile, emu4_core_map_path)
+    if ok and type(user_map) == "table" then
+        for k, v in pairs(user_map) do
+            if emu4_core[k] ~= nil and type(v) == "string" and v ~= "" then
+                emu4_core[k] = v
+            end
+        end
+    else
+        save_emu4_core_map()
+    end
+end
+
+function emu4_cycle_platform(delta)
+    emu4_selected_platform = emu4_selected_platform + delta
+    if emu4_selected_platform < 1 then
+        emu4_selected_platform = #emu4_platforms
+    elseif emu4_selected_platform > #emu4_platforms then
+        emu4_selected_platform = 1
+    end
+end
+
+function emu4_core_index(core_name)
+    for i, core_name_available in ipairs(emu4_available_cores) do
+        if core_name_available == core_name then
+            return i
+        end
+    end
+    return 1
+end
+
+function emu4_cycle_core(delta)
+    local platform = emu4_platforms[emu4_selected_platform]
+    local idx = emu4_core_index(emu4_core[platform.key]) + delta
+    if idx < 1 then
+        idx = #emu4_available_cores
+    elseif idx > #emu4_available_cores then
+        idx = 1
+    end
+    emu4_core[platform.key] = emu4_available_cores[idx]
+    save_emu4_core_map()
+end
+
+function emu4_reset_platform_core()
+    local platform = emu4_platforms[emu4_selected_platform]
+    emu4_core[platform.key] = emu4_default_core[platform.key]
+    save_emu4_core_map()
+end
+
+function emu4_reset_all_cores()
+    for k, v in pairs(emu4_default_core) do
+        emu4_core[k] = v
+    end
+    save_emu4_core_map()
+end
+
+function emu4_core_installed(core_name)
+    return System.doesFileExist("ux0:/app/EMU4VPLUS/eboot_" .. core_name .. ".self")
+end
+
+load_emu4_core_map()
+
+function launch_retro_router(cat_key)
+    if setUseEmu4Vita == 1 or not System.doesDirExist("ux0:/app/RETROVITA") then
+        launch_emu4vita(emu4_core[cat_key] or "fba_lite")
+    else
+        launch_retroarch(core[cat_key])
+    end
+end
+-- END EMU4VITA_PATCH
+
 -- Launcher App Directory
 -- local launch_dir_adr = "ux0:/app/RETROLNCR/"
 -- local launch_app_adr = "RETROLNCR"
@@ -1799,6 +2014,9 @@ setTime = 0 -- 24 hour
 local filterGames = 0 -- All
 local showMissingCovers = 1 -- On
 local smoothScrolling = 1 -- On
+-- BEGIN EMU4VITA_PATCH: persisted global launcher toggle
+setUseEmu4Vita = 1 -- On
+-- END EMU4VITA_PATCH
 
 set2DViews = 1 -- On
 setChangeViews = 1 -- On
@@ -1865,6 +2083,7 @@ function SaveSettings()
         "\nCRC=" .. setCRCScan .. " " .. 
         "\nShow_System_Apps=" .. showSysApps .. " " .. 
         "\nExtract_PSP_backgrounds=" .. setPSPExtractBG .. " " .. 
+        "\nUse_Emu4Vita=" .. setUseEmu4Vita .. " " .. 
         "\nStartup_Collection=" .. startCategory_collection -- MUST ALWAYS BE LAST -- the config is split into a table using number values which this setting does not have. Need to add proper ini file reading
 
         file_config:write(settings)
@@ -1917,7 +2136,8 @@ if System.doesFileExist(cur_dir .. "/config.dat") then
     local getCRCScan = settingValue[26]; if getCRCScan ~= nil then setCRCScan = getCRCScan end
     local getShowSysApps = settingValue[27]; if getShowSysApps ~= nil then showSysApps = getShowSysApps end
     local getPSPExtractBG = settingValue[28]; if getPSPExtractBG ~= nil then setPSPExtractBG = getPSPExtractBG end
-    -- settingValue[26] is startup collection 
+    getUseEmu4Vita = settingValue[29]; if getUseEmu4Vita ~= nil then setUseEmu4Vita = getUseEmu4Vita end
+    -- settingValue[29] is startup collection 
 
     selectedwall = setBackground
 
@@ -2430,6 +2650,9 @@ local lang_default =
 ["Time_colon"] = "Time:",
 ["Time_12hr"] = "12-Hour Clock",
 ["Time_24hr"] = "24-Hour Clock",
+-- BEGIN EMU4VITA_PATCH: settings label
+["Use_Emu4Vita_colon"] = "Use Emu4Vita++:",
+-- END EMU4VITA_PATCH
 
 -- Game options
 ["Options"] = "Options",
@@ -2680,6 +2903,14 @@ function ChangeLanguage(def)
         -- If missing use default EN table
         lang_lines = lang_default
     end
+
+    -- BEGIN EMU4VITA_PATCH: language fallback for added settings keys
+    for k, v in pairs(lang_default) do
+        if lang_lines[k] == nil then
+            lang_lines[k] = v
+        end
+    end
+    -- END EMU4VITA_PATCH
 
     if setLanguage == 2 or setLanguage == 3 or setLanguage == 6 or setLanguage == 8 or setLanguage == 9 or setLanguage == 12 or setLanguage == 16 or setLanguage == 19 or setLanguage == 21 then
     -- German, French, Portugeuse, Russian, Japanese, Turkish, Dutch, Japanese (Ryukyuan) language fix, Portuguese (Brasil)
@@ -3848,6 +4079,41 @@ function launch_retroarch(def_core_name)
     end
     ::continue::
 end
+
+-- BEGIN EMU4VITA_PATCH: Emu4Vita++ launcher
+function emu4_uri_encode(value)
+    value = tostring(value)
+    value = value:gsub("\n", "\r\n")
+    value = value:gsub("([^%w%-_%.~:/])", function(c)
+        return string.format("%%%02X", string.byte(c))
+    end)
+    return value
+end
+
+function launch_emu4vita(def_core_name)
+    check_app_installed("EMU4VPLUS", "Please install Emu4Vita++.")
+    if launch_check_app_installed == false then
+        goto continue
+    end
+
+    if not emu4_core_installed(def_core_name) then
+        status = System.getMessageState()
+        if status ~= RUNNING then
+            System.setMessage("Missing Emu4Vita++ core: eboot_" .. tostring(def_core_name) .. ".self", false, BUTTON_OK)
+        end
+        goto continue
+    end
+
+    check_game_available(rom_location)
+
+    if launch_check_game_available == true then
+        prepare_for_launch()
+        System.executeUri("psgm:play?titleid=EMU4VPLUS" .. "&core=" .. emu4_uri_encode(def_core_name) .. "&rom=" .. emu4_uri_encode(rom_location))
+        System.exit()
+    end
+    ::continue::
+end
+-- END EMU4VITA_PATCH
 
 function launch_DaedalusX64()
     -- Launch preflight check
@@ -13942,7 +14208,7 @@ while true do
         Graphics.fillRect(60, 900, 82 + (menuY * 47), 129 + (menuY * 47), themeCol)-- selection
 
 
-        menuItems = 6
+        menuItems = 7
 
         -- MENU 4 / #0 Back
         Font.print(fnt22, setting_x, setting_y0, lang_lines.Back_Chevron, white)--Back
@@ -15872,7 +16138,7 @@ while true do
         Graphics.fillRect(60, 900, 82 + (menuY * 47), 129 + (menuY * 47), themeCol)-- selection
 
 
-        menuItems = 5
+        menuItems = 6
 
         -- MENU 19 / #0 Back
         Font.print(fnt22, setting_x, setting_y0, lang_lines.Back_Chevron, white)--Back
@@ -15913,6 +16179,19 @@ while true do
 
         -- MENU 19 / #5 Edit collections
         Font.print(fnt22, setting_x, setting_y5, lang_lines.Edit_collections, white)--Edit collections
+
+        -- BEGIN EMU4VITA_PATCH: global launcher toggle
+        -- MENU 19 / #6 Use Emu4Vita++
+        Font.print(fnt22, setting_x, setting_y6, lang_lines.Use_Emu4Vita_colon, white)
+        if setUseEmu4Vita == 1 then
+            Font.print(fnt22, setting_x_offset, setting_y6, lang_lines.On, white)
+        else
+            Font.print(fnt22, setting_x_offset, setting_y6, lang_lines.Off, white)
+        end
+        -- END EMU4VITA_PATCH
+
+        -- MENU 19 / #7 Emu4Vita++ core mappings
+        Font.print(fnt22, setting_x, setting_y7, "Emu4Vita++ cores", white)
 
         -- MENU 19 - FUNCTIONS
         status = System.getMessageState()
@@ -15988,6 +16267,15 @@ while true do
                 elseif menuY == 5 then -- #5 Edit collections
                     showMenu = 24 
                     menuY = 0
+                elseif menuY == 6 then -- #6 Use Emu4Vita++
+                    if setUseEmu4Vita == 1 then
+                        setUseEmu4Vita = 0
+                    else
+                        setUseEmu4Vita = 1
+                    end
+                elseif menuY == 7 then -- #7 Emu4Vita++ core mappings
+                    showMenu = 27
+                    menuY = 0
                 end
 
                 --Save settings
@@ -16007,6 +16295,88 @@ while true do
                 end
             end
             
+        end
+
+-- MENU 27 - EMU4VITA++ CORE MAPPINGS
+    elseif showMenu == 27 then
+        
+        label1 = Font.getTextWidth(fnt20, lang_lines.Close)--Close
+        label2 = Font.getTextWidth(fnt20, lang_lines.Select)--Select
+
+        Graphics.drawImage(900-label1, 510, btnO)
+        Font.print(fnt20, 900+28-label1, 508, lang_lines.Close, white)--Close
+
+        Graphics.drawImage(900-(btnMargin * 2)-label1-label2, 510, btnX)
+        Font.print(fnt20, 900+28-(btnMargin * 2)-label1-label2, 508, lang_lines.Select, white)--Select
+
+        Graphics.fillRect(60, 900, 34, 460, darkalpha)
+
+        Font.print(fnt22, setting_x, setting_yh, "Emu4Vita++ cores", white)
+        Graphics.fillRect(60, 900, 78, 81, white)
+
+        Graphics.fillRect(60, 900, 82 + (menuY * 47), 129 + (menuY * 47), themeCol)-- selection
+
+        menuItems = 4
+        emu4_current_platform = emu4_platforms[emu4_selected_platform]
+        emu4_current_core = emu4_core[emu4_current_platform.key]
+
+        Font.print(fnt22, setting_x, setting_y0, lang_lines.Back_Chevron, white)--Back
+
+        Font.print(fnt22, setting_x, setting_y1, "Platform:", white)
+        Font.print(fnt22, setting_x_offset, setting_y1, "<  " .. emu4_current_platform.label .. "  >", white)
+
+        Font.print(fnt22, setting_x, setting_y2, "Core:", white)
+        Font.print(fnt22, setting_x_offset, setting_y2, "<  " .. emu4_current_core .. "  >", white)
+
+        Font.print(fnt22, setting_x, setting_y3, "Reset platform core", white)
+        Font.print(fnt22, setting_x, setting_y4, "Reset all core mappings", white)
+
+        if emu4_core_installed(emu4_current_core) then
+            Font.print(fnt20, setting_x, setting_y8, "Installed: eboot_" .. emu4_current_core .. ".self", white)
+        else
+            Font.print(fnt20, setting_x, setting_y8, "Missing: eboot_" .. emu4_current_core .. ".self", white)
+        end
+
+        status = System.getMessageState()
+        if status ~= RUNNING then
+            if (Controls.check(pad, SCE_CTRL_CROSS_MAP) and not Controls.check(oldpad, SCE_CTRL_CROSS_MAP)) then
+                if menuY == 0 then
+                    showMenu = 19
+                    menuY = 7
+                elseif menuY == 1 then
+                    emu4_cycle_platform(1)
+                elseif menuY == 2 then
+                    emu4_cycle_core(1)
+                elseif menuY == 3 then
+                    emu4_reset_platform_core()
+                elseif menuY == 4 then
+                    emu4_reset_all_cores()
+                end
+            elseif (Controls.check(pad, SCE_CTRL_UP)) and not (Controls.check(oldpad, SCE_CTRL_UP)) then
+                if menuY > 0 then
+                    menuY = menuY - 1
+                else
+                    menuY=menuItems
+                end
+            elseif (Controls.check(pad, SCE_CTRL_DOWN)) and not (Controls.check(oldpad, SCE_CTRL_DOWN)) then
+                if menuY < menuItems then
+                    menuY = menuY + 1
+                else
+                    menuY=0
+                end
+            elseif (Controls.check(pad, SCE_CTRL_LEFT)) and not (Controls.check(oldpad, SCE_CTRL_LEFT)) then
+                if menuY == 1 then
+                    emu4_cycle_platform(-1)
+                elseif menuY == 2 then
+                    emu4_cycle_core(-1)
+                end
+            elseif (Controls.check(pad, SCE_CTRL_RIGHT)) and not (Controls.check(oldpad, SCE_CTRL_RIGHT)) then
+                if menuY == 1 then
+                    emu4_cycle_platform(1)
+                elseif menuY == 2 then
+                    emu4_cycle_core(1)
+                end
+            end
         end
 
 
@@ -18352,7 +18722,7 @@ while true do
                         else
                             if games_table[p].app_type_default == 3 then
                                 -- Launch PS1 retroarch
-                                rom_location = (games_table[p].game_path) launch_retroarch(core.PS1)
+                                rom_location = (games_table[p].game_path) launch_retro_router("PS1")
                             else
                                 -- Vita app
                                 launch_vita_title(games_table[p].name)
@@ -18369,7 +18739,7 @@ while true do
                         else
                             if homebrews_table[p].app_type_default == 3 then
                                 -- Launch PS1 retroarch
-                                rom_location = (homebrews_table[p].game_path) launch_retroarch(core.PS1)
+                                rom_location = (homebrews_table[p].game_path) launch_retro_router("PS1")
                             else
                                 -- Vita app
                                 launch_vita_title(homebrews_table[p].name)
@@ -18386,7 +18756,7 @@ while true do
                         else
                             if psp_table[p].app_type_default == 3 then
                                 -- Launch PS1 retroarch
-                                rom_location = (psp_table[p].game_path) launch_retroarch(core.PS1)
+                                rom_location = (psp_table[p].game_path) launch_retro_router("PS1")
                             else
                                 -- Vita app
                                 launch_vita_title(psp_table[p].name)
@@ -18404,7 +18774,7 @@ while true do
                         else
                             if psx_table[p].app_type_default == 3 then
                                 -- Launch PS1 retroarch
-                                rom_location = (psx_table[p].game_path) launch_retroarch(core.PS1)
+                                rom_location = (psx_table[p].game_path) launch_retro_router("PS1")
                             else
                                 -- Vita app
                                 launch_vita_title(psx_table[p].name)
@@ -18414,42 +18784,42 @@ while true do
                     -- Start Retro    
                     elseif showCat == 5 then rom_title_id = tostring(psm_table[p].name) launch_psmobile(rom_title_id)
                     elseif showCat == 6 then rom_location = (n64_table[p].game_path) launch_DaedalusX64()
-                    elseif showCat == 7 then rom_location = (snes_table[p].game_path) launch_retroarch(core.SNES)
-                    elseif showCat == 8 then rom_location = (nes_table[p].game_path) launch_retroarch(core.NES)
+                    elseif showCat == 7 then rom_location = (snes_table[p].game_path) launch_retro_router("SNES")
+                    elseif showCat == 8 then rom_location = (nes_table[p].game_path) launch_retro_router("NES")
                     elseif showCat == 9 then rom_location = (nds_table[p].game_path) launch_DSVita()
-                    elseif showCat == 10 then rom_location = (gba_table[p].game_path) launch_retroarch(core.GBA)
-                    elseif showCat == 11 then rom_location = (gbc_table[p].game_path) launch_retroarch(core.GBC)
-                    elseif showCat == 12 then rom_location = (gb_table[p].game_path) launch_retroarch(core.GB)
+                    elseif showCat == 10 then rom_location = (gba_table[p].game_path) launch_retro_router("GBA")
+                    elseif showCat == 11 then rom_location = (gbc_table[p].game_path) launch_retro_router("GBC")
+                    elseif showCat == 12 then rom_location = (gb_table[p].game_path) launch_retro_router("GB")
                     elseif showCat == 13 then rom_location = (dreamcast_table[p].game_path) launch_Flycast()
-                    elseif showCat == 14 then rom_location = (sega_cd_table[p].game_path) launch_retroarch(core.SEGA_CD) 
-                    elseif showCat == 15 then rom_location = (s32x_table[p].game_path) launch_retroarch(core.s32X) 
-                    elseif showCat == 16 then rom_location = (md_table[p].game_path) launch_retroarch(core.MD)
-                    elseif showCat == 17 then rom_location = (sms_table[p].game_path) launch_retroarch(core.SMS)
-                    elseif showCat == 18 then rom_location = (gg_table[p].game_path) launch_retroarch(core.GG)
-                    elseif showCat == 19 then rom_location = (tg16_table[p].game_path) launch_retroarch(core.TG16)
-                    elseif showCat == 20 then rom_location = (tgcd_table[p].game_path) launch_retroarch(core.TGCD)
-                    elseif showCat == 21 then rom_location = (pce_table[p].game_path) launch_retroarch(core.PCE)
-                    elseif showCat == 22 then rom_location = (pcecd_table[p].game_path) launch_retroarch(core.PCECD)
-                    elseif showCat == 23 then rom_location = (amiga_table[p].game_path) launch_retroarch(core.AMIGA)
+                    elseif showCat == 14 then rom_location = (sega_cd_table[p].game_path) launch_retro_router("SEGA_CD") 
+                    elseif showCat == 15 then rom_location = (s32x_table[p].game_path) launch_retro_router("s32X") 
+                    elseif showCat == 16 then rom_location = (md_table[p].game_path) launch_retro_router("MD")
+                    elseif showCat == 17 then rom_location = (sms_table[p].game_path) launch_retro_router("SMS")
+                    elseif showCat == 18 then rom_location = (gg_table[p].game_path) launch_retro_router("GG")
+                    elseif showCat == 19 then rom_location = (tg16_table[p].game_path) launch_retro_router("TG16")
+                    elseif showCat == 20 then rom_location = (tgcd_table[p].game_path) launch_retro_router("TGCD")
+                    elseif showCat == 21 then rom_location = (pce_table[p].game_path) launch_retro_router("PCE")
+                    elseif showCat == 22 then rom_location = (pcecd_table[p].game_path) launch_retro_router("PCECD")
+                    elseif showCat == 23 then rom_location = (amiga_table[p].game_path) launch_retro_router("AMIGA")
                     elseif showCat == 24 then rom_title_id = (scummvm_table[p].titleid) rom_location = (scummvm_table[p].game_path) launch_scummvm()
-                    elseif showCat == 25 then rom_location = (c64_table[p].game_path) launch_retroarch(core.C64)
-                    elseif showCat == 26 then rom_location = (wswan_col_table[p].game_path) launch_retroarch(core.WSWAN_COL)
-                    elseif showCat == 27 then rom_location = (wswan_table[p].game_path) launch_retroarch(core.WSWAN)
+                    elseif showCat == 25 then rom_location = (c64_table[p].game_path) launch_retro_router("C64")
+                    elseif showCat == 26 then rom_location = (wswan_col_table[p].game_path) launch_retro_router("WSWAN_COL")
+                    elseif showCat == 27 then rom_location = (wswan_table[p].game_path) launch_retro_router("WSWAN")
                     elseif showCat == 28 then rom_location = (pico8_table[p].game_path) launch_pico8()
-                    elseif showCat == 29 then rom_location = (msx2_table[p].game_path) launch_retroarch(core.MSX2)
-                    elseif showCat == 30 then rom_location = (msx1_table[p].game_path) launch_retroarch(core.MSX1)
-                    elseif showCat == 31 then rom_location = (zxs_table[p].game_path) launch_retroarch(core.ZXS)
-                    elseif showCat == 32 then rom_location = (atari_7800_table[p].game_path) launch_retroarch(core.ATARI_7800)
-                    elseif showCat == 33 then rom_location = (atari_5200_table[p].game_path) launch_retroarch(core.ATARI_5200)
-                    elseif showCat == 34 then rom_location = (atari_2600_table[p].game_path) launch_retroarch(core.ATARI_2600)
-                    elseif showCat == 35 then rom_location = (atari_lynx_table[p].game_path) launch_retroarch(core.ATARI_LYNX)
-                    elseif showCat == 36 then rom_location = (colecovision_table[p].game_path) launch_retroarch(core.COLECOVISION)
-                    elseif showCat == 37 then rom_location = (vectrex_table[p].game_path) launch_retroarch(core.VECTREX)
-                    elseif showCat == 38 then rom_location = (fba_table[p].game_path) launch_retroarch(core.FBA)
-                    elseif showCat == 39 then rom_location = (mame_2003_plus_table[p].game_path) launch_retroarch(core.MAME_2003_PLUS)
-                    elseif showCat == 40 then rom_location = (mame_2000_table[p].game_path) launch_retroarch(core.MAME_2000)
-                    elseif showCat == 41 then rom_location = (neogeo_table[p].game_path) launch_retroarch(core.NEOGEO)
-                    elseif showCat == 42 then rom_location = (ngpc_table[p].game_path) launch_retroarch(core.NGPC)
+                    elseif showCat == 29 then rom_location = (msx2_table[p].game_path) launch_retro_router("MSX2")
+                    elseif showCat == 30 then rom_location = (msx1_table[p].game_path) launch_retro_router("MSX1")
+                    elseif showCat == 31 then rom_location = (zxs_table[p].game_path) launch_retro_router("ZXS")
+                    elseif showCat == 32 then rom_location = (atari_7800_table[p].game_path) launch_retro_router("ATARI_7800")
+                    elseif showCat == 33 then rom_location = (atari_5200_table[p].game_path) launch_retro_router("ATARI_5200")
+                    elseif showCat == 34 then rom_location = (atari_2600_table[p].game_path) launch_retro_router("ATARI_2600")
+                    elseif showCat == 35 then rom_location = (atari_lynx_table[p].game_path) launch_retro_router("ATARI_LYNX")
+                    elseif showCat == 36 then rom_location = (colecovision_table[p].game_path) launch_retro_router("COLECOVISION")
+                    elseif showCat == 37 then rom_location = (vectrex_table[p].game_path) launch_retro_router("VECTREX")
+                    elseif showCat == 38 then rom_location = (fba_table[p].game_path) launch_retro_router("FBA")
+                    elseif showCat == 39 then rom_location = (mame_2003_plus_table[p].game_path) launch_retro_router("MAME_2003_PLUS")
+                    elseif showCat == 40 then rom_location = (mame_2000_table[p].game_path) launch_retro_router("MAME_2000")
+                    elseif showCat == 41 then rom_location = (neogeo_table[p].game_path) launch_retro_router("NEOGEO")
+                    elseif showCat == 42 then rom_location = (ngpc_table[p].game_path) launch_retro_router("NGPC")
                     elseif showCat == 43 then rom_location = launch_vita_sysapp(xCatLookup(showCat)[p].name)
 
                     elseif showCat >= 44 or showCat == 0 then
@@ -18463,7 +18833,7 @@ while true do
                             else
                                 if xCatLookup(showCat)[p].app_type_default == 3 then
                                     -- Launch PS1 retroarch
-                                    rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.PS1)
+                                    rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("PS1")
                                 elseif xCatLookup(showCat)[p].app_type_default == 42 then
                                     -- Sys app
                                     launch_vita_sysapp(xCatLookup(showCat)[p].name)
@@ -18475,39 +18845,39 @@ while true do
 
                         -- Start Retro    
                         elseif apptype == 5 then rom_location = (xCatLookup(showCat)[p].game_path) launch_DaedalusX64()
-                        elseif apptype == 6 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.SNES)
-                        elseif apptype == 7 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.NES)
-                        elseif apptype == 8 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.GBA)
-                        elseif apptype == 9 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.GBC)
-                        elseif apptype == 10 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.GB)
+                        elseif apptype == 6 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("SNES")
+                        elseif apptype == 7 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("NES")
+                        elseif apptype == 8 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("GBA")
+                        elseif apptype == 9 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("GBC")
+                        elseif apptype == 10 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("GB")
                         elseif apptype == 11 then rom_location = (xCatLookup(showCat)[p].game_path) launch_Flycast()
-                        elseif apptype == 12 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.SEGA_CD) 
-                        elseif apptype == 13 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.s32X) 
-                        elseif apptype == 14 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.MD)
-                        elseif apptype == 15 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.SMS)
-                        elseif apptype == 16 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.GG)
-                        elseif apptype == 17 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.TG16)
-                        elseif apptype == 18 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.TGCD)
-                        elseif apptype == 19 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.PCE)
-                        elseif apptype == 20 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.PCECD)
-                        elseif apptype == 21 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.AMIGA)
-                        elseif apptype == 22 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.C64)
-                        elseif apptype == 23 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.WSWAN_COL)
-                        elseif apptype == 24 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.WSWAN)
-                        elseif apptype == 25 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.MSX2)
-                        elseif apptype == 26 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.MSX1)
-                        elseif apptype == 27 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.ZXS)
-                        elseif apptype == 28 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.ATARI_7800)
-                        elseif apptype == 29 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.ATARI_5200)
-                        elseif apptype == 30 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.ATARI_2600)
-                        elseif apptype == 31 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.ATARI_LYNX)
-                        elseif apptype == 32 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.COLECOVISION)
-                        elseif apptype == 33 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.VECTREX)
-                        elseif apptype == 34 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.FBA)
-                        elseif apptype == 35 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.MAME_2003_PLUS)
-                        elseif apptype == 36 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.MAME_2000)
-                        elseif apptype == 37 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.NEOGEO)
-                        elseif apptype == 38 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retroarch(core.NGPC)
+                        elseif apptype == 12 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("SEGA_CD") 
+                        elseif apptype == 13 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("s32X") 
+                        elseif apptype == 14 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("MD")
+                        elseif apptype == 15 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("SMS")
+                        elseif apptype == 16 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("GG")
+                        elseif apptype == 17 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("TG16")
+                        elseif apptype == 18 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("TGCD")
+                        elseif apptype == 19 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("PCE")
+                        elseif apptype == 20 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("PCECD")
+                        elseif apptype == 21 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("AMIGA")
+                        elseif apptype == 22 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("C64")
+                        elseif apptype == 23 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("WSWAN_COL")
+                        elseif apptype == 24 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("WSWAN")
+                        elseif apptype == 25 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("MSX2")
+                        elseif apptype == 26 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("MSX1")
+                        elseif apptype == 27 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("ZXS")
+                        elseif apptype == 28 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("ATARI_7800")
+                        elseif apptype == 29 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("ATARI_5200")
+                        elseif apptype == 30 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("ATARI_2600")
+                        elseif apptype == 31 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("ATARI_LYNX")
+                        elseif apptype == 32 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("COLECOVISION")
+                        elseif apptype == 33 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("VECTREX")
+                        elseif apptype == 34 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("FBA")
+                        elseif apptype == 35 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("MAME_2003_PLUS")
+                        elseif apptype == 36 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("MAME_2000")
+                        elseif apptype == 37 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("NEOGEO")
+                        elseif apptype == 38 then rom_location = (xCatLookup(showCat)[p].game_path) launch_retro_router("NGPC")
                         elseif apptype == 39 then rom_title_id = tostring(xCatLookup(showCat)[p].name) launch_psmobile(rom_title_id)
                         elseif apptype == 40 then rom_title_id = (xCatLookup(showCat)[p].titleid) rom_location = (xCatLookup(showCat)[p].game_path) launch_scummvm()
                         elseif apptype == 41 then rom_location = (xCatLookup(showCat)[p].game_path) launch_pico8()
@@ -19384,6 +19754,9 @@ while true do
                 elseif showMenu == 26 then -- Collection Custom sort order
                     -- showMenu = 24
                     -- menuY=4
+                elseif showMenu == 27 then -- Emu4Vita++ core mappings
+                    showMenu = 19
+                    menuY=7
                     
                 elseif showMenu == 2 then
                     -- If search cancelled with circle, return to settings menu
