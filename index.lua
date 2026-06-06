@@ -1539,6 +1539,45 @@ function emu4_core_installed(core_name)
     return System.doesFileExist("ux0:/app/EMU4VPLUS/eboot_" .. core_name .. ".self")
 end
 
+function emu4_cat_key_for_app_type(def_app_type)
+    local app_type_map = {
+    [4] = "PS1",
+    [6] = "SNES",
+    [7] = "NES",
+    [8] = "GBA",
+    [9] = "GBC",
+    [10] = "GB",
+    [12] = "SEGA_CD",
+    [13] = "s32X",
+    [14] = "MD",
+    [15] = "SMS",
+    [16] = "GG",
+    [17] = "TG16",
+    [18] = "TGCD",
+    [19] = "PCE",
+    [20] = "PCECD",
+    [21] = "AMIGA",
+    [22] = "C64",
+    [23] = "WSWAN_COL",
+    [24] = "WSWAN",
+    [25] = "MSX2",
+    [26] = "MSX1",
+    [27] = "ZXS",
+    [28] = "ATARI_7800",
+    [29] = "ATARI_5200",
+    [30] = "ATARI_2600",
+    [31] = "ATARI_LYNX",
+    [32] = "COLECOVISION",
+    [33] = "VECTREX",
+    [34] = "FBA",
+    [35] = "MAME_2003_PLUS",
+    [36] = "MAME_2000",
+    [37] = "NEOGEO",
+    [38] = "NGPC",
+    }
+    return app_type_map[def_app_type]
+end
+
 load_emu4_core_map()
 
 function launch_retro_router(cat_key)
@@ -16458,6 +16497,13 @@ while true do
                 menuItems = menuItems + 1
             end
 
+            local emu4_test_cat_key = emu4_cat_key_for_app_type(apptype)
+            local emu4_test_flag = false
+            if emu4_test_cat_key ~= nil then
+                emu4_test_flag = true
+                menuItems = menuItems + 1
+            end
+
             -- Calculate vertical centre
             vertically_centre_mini_menu(menuItems)
 
@@ -16497,6 +16543,10 @@ while true do
             Font.print(fnt22, setting_x, setting_y0 + y_centre_text_offset, lang_lines.Remove_from_favorites, white)--Remove from favourites
         else
             Font.print(fnt22, setting_x, setting_y0 + y_centre_text_offset, lang_lines.Add_to_favorites, white)--Add to favourites
+        end
+
+        if emu4_test_flag == true then
+            Font.print(fnt22, setting_x, setting_y0 + (menuItems * 47) + y_centre_text_offset, "Test Emu4Vita++ launch", white)
         end
 
         -- MENU 20 / #1 Rename
@@ -16635,6 +16685,14 @@ while true do
                                 else
                                 end
                             end
+                        end
+                    end
+
+                    function dynamic_menu_test_emu4vita()
+                        local test_cat_key = emu4_cat_key_for_app_type(apptype)
+                        if test_cat_key ~= nil then
+                            rom_location = xCatLookup(showCat)[p].game_path
+                            launch_emu4vita(emu4_core[test_cat_key] or "fba_lite")
                         end
                     end
 
@@ -16856,6 +16914,8 @@ while true do
                 elseif menuY == 3 then 
                     showMenu = 22 -- Add to collection
                     menuY = 0
+                elseif emu4_test_flag == true and menuY == menuItems then
+                    dynamic_menu_test_emu4vita()
                 elseif menuY == 4 then 
                     -- Dynamic menu
                     if remove_from_collection_flag == true then
