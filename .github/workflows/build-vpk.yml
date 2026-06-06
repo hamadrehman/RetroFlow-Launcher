@@ -1,0 +1,38 @@
+name: Build RetroFlow VPK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - td/emu4vita-launcher
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install host tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip rsync
+
+      - name: Build VPK
+        run: |
+          chmod +x scripts/build_vpk.sh
+          scripts/build_vpk.sh
+
+      - name: Generate checksums
+        run: |
+          cd out
+          sha256sum RetroFlow_emu4vita.vpk > SHA256SUMS.txt
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: retroflow-emu4vita
+          path: |
+            out/RetroFlow_emu4vita.vpk
+            out/SHA256SUMS.txt
