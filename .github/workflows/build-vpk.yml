@@ -6,6 +6,9 @@ on:
     branches:
       - td/emu4vita-launcher
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,10 +32,19 @@ jobs:
           cd out
           sha256sum RetroFlow_emu4vita.vpk > SHA256SUMS.txt
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
         with:
-          name: retroflow-emu4vita
-          path: |
+          tag_name: build-${{ github.sha }}
+          name: RetroFlow Emu4Vita build ${{ github.sha }}
+          make_latest: true
+          generate_release_notes: false
+          body: |
+            Automated build from `${{ github.ref_name }}` at `${{ github.sha }}`.
+
+            Assets:
+            - `RetroFlow_emu4vita.vpk`
+            - `SHA256SUMS.txt`
+          files: |
             out/RetroFlow_emu4vita.vpk
             out/SHA256SUMS.txt
