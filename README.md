@@ -4,6 +4,15 @@ Unofficial fork of [jimbob4000/RetroFlow-Launcher](https://github.com/jimbob4000
 
 Original project and primary credit remain with `jimbob4000`. This fork only adds the launcher-side changes needed to route supported retro launches through Emu4Vita++ instead of the previous default path.
 
+## Use this fork if you want
+
+- `RetroFlow_emu4vita.vpk` for the RetroFlow + Emu4Vita++ setup
+- a RetroFlow build that lets you choose Emu4Vita++ cores from the UI
+- platform-to-core mapping saved in `ux0:/data/RetroFlow/emu4vita_core_map.lua`
+- launch handoff that is intended to pair with the matching Emu4Vita++ fork
+
+If you want stock RetroFlow behavior, use the upstream project instead.
+
 ## What changed in this fork
 
 - launches supported retro systems through Emu4Vita++
@@ -19,6 +28,10 @@ Original project and primary credit remain with `jimbob4000`. This fork only add
 This fork publishes:
 
 - `RetroFlow_emu4vita.vpk`
+
+Latest fork release:
+
+- https://github.com/hamadrehman/RetroFlow-Launcher/releases/latest
 
 The VPK is intended to be paired with the matching Emu4Vita++ fork build.
 
