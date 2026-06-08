@@ -1464,7 +1464,31 @@ emu4_available_cores = {
 emu4_selected_platform = 1
 emu4_core_map_path = cur_dir .. "/emu4vita_core_map.lua"
 
+function emu4_core_is_valid(core_name)
+    if type(core_name) ~= "string" or core_name == "" then
+        return false
+    end
+
+    for _, core_name_available in ipairs(emu4_available_cores) do
+        if core_name_available == core_name then
+            return true
+        end
+    end
+
+    return false
+end
+
+function emu4_normalize_core_map()
+    for _, platform in ipairs(emu4_platforms) do
+        local core_name = emu4_core[platform.key]
+        if not emu4_core_is_valid(core_name) then
+            emu4_core[platform.key] = emu4_default_core[platform.key]
+        end
+    end
+end
+
 function save_emu4_core_map()
+    emu4_normalize_core_map()
     local file_map = assert(io.open(emu4_core_map_path, "w"), "Failed to open emu4vita_core_map.lua")
     file_map:write("return {\n")
     for i, platform in ipairs(emu4_platforms) do
@@ -1480,12 +1504,19 @@ function load_emu4_core_map()
         return
     end
 
+    local changed = false
     local ok, user_map = pcall(dofile, emu4_core_map_path)
     if ok and type(user_map) == "table" then
         for k, v in pairs(user_map) do
-            if emu4_core[k] ~= nil and type(v) == "string" and v ~= "" then
+            if emu4_core[k] ~= nil and emu4_core_is_valid(v) then
                 emu4_core[k] = v
+            elseif emu4_core[k] ~= nil then
+                changed = true
             end
+        end
+        emu4_normalize_core_map()
+        if changed then
+            save_emu4_core_map()
         end
     else
         save_emu4_core_map()
@@ -1502,11 +1533,16 @@ function emu4_cycle_platform(delta)
 end
 
 function emu4_core_index(core_name)
+    if not emu4_core_is_valid(core_name) then
+        return emu4_core_index(emu4_available_cores[1])
+    end
+
     for i, core_name_available in ipairs(emu4_available_cores) do
         if core_name_available == core_name then
             return i
         end
     end
+
     return 1
 end
 
