@@ -2137,54 +2137,64 @@ if System.doesFileExist(cur_dir .. "/config.dat") then
     local filesize = System.sizeFile(file_config)
     local str = System.readFile(file_config, filesize)
     System.closeFile(file_config)
-    
-    -- Convert space seperated setting numbers to values, can be 1 or more digits
-    local function tovector(s)
-        local settingValue = {}
-        s:gsub("\n", " "):gsub('%-?%d+', function(n) settingValue[#settingValue+1] = tonumber(n) end)
-        return settingValue
+
+    local function trim(s)
+        return (s:gsub("^%s+", ""):gsub("%s+$", ""))
     end
 
-    local settingValue = tovector(str)
+    local config_map = {}
+    for line in string.gmatch(str, "[^\r\n]+") do
+        local key, value = string.match(line, "^([^=]+)=(.*)$")
+        if key ~= nil then
+            config_map[trim(key)] = trim(value)
+        end
+    end
 
-    local getReflections = settingValue[1]; if getReflections ~= nil then setReflections = getReflections end
-    local getSounds = settingValue[2]; if getSounds ~= nil then setSounds = getSounds end
-    local getthemeColor = settingValue[3]; if getthemeColor ~= nil then themeColor = getthemeColor end
-    local getBackground = settingValue[4]; if getBackground ~= nil then setBackground = getBackground end
-    local getLanguage = settingValue[5]; if getLanguage ~= nil then setLanguage = getLanguage end
-    local getView = settingValue[6]; if getView ~= nil then showView = getView end
-    local getHomebrews = settingValue[7]; if getHomebrews ~= nil then showHomebrews = getHomebrews end
-    local getStartupScan = settingValue[8]; if getStartupScan ~= nil then startupScan = getStartupScan end
-    local getCategory = settingValue[9]; if getCategory ~= nil then startCategory = getCategory end
-    local getRecent = settingValue[10]; if getRecent ~= nil then showRecentlyPlayed = getRecent end
-    local getAll = settingValue[11]; if getAll ~= nil then showAll = getAll end
-    local getAdrenaline_rom_location = settingValue[12]; if getAdrenaline_rom_location ~= nil then Adrenaline_roms = getAdrenaline_rom_location end
-    local getGame_Backgrounds = settingValue[13]; if getGame_Backgrounds ~= nil then Game_Backgrounds = getGame_Backgrounds end
-    local getMusic = settingValue[14]; if getMusic ~= nil then setMusic = getMusic end
-    local getMusicShuffle = settingValue[15]; if getMusicShuffle ~= nil then setMusicShuffle = getMusicShuffle end
-    local getSwap_X_O_buttons = settingValue[16]; if getSwap_X_O_buttons ~= nil then setSwap_X_O_buttons = getSwap_X_O_buttons end
-    local getAdrPSButton = settingValue[17]; if getAdrPSButton ~= nil then setAdrPSButton = getAdrPSButton end
-    local getHidden = settingValue[18]; if getHidden ~= nil then showHidden = getHidden end
-    local getCollections = settingValue[19]; if getCollections ~= nil then showCollections = getCollections end
-    local getFilterGames = settingValue[20]; if getFilterGames ~= nil then filterGames = getFilterGames end
-    local getshowMissingCovers = settingValue[21]; if getshowMissingCovers ~= nil then showMissingCovers = getshowMissingCovers end
-    local getsmoothScrolling = settingValue[22]; if getsmoothScrolling ~= nil then smoothScrolling = getsmoothScrolling end
-    local get2DViews = settingValue[23]; if get2DViews ~= nil then set2DViews = get2DViews end
-    local getChangeViews = settingValue[24]; if getChangeViews ~= nil then setChangeViews = getChangeViews end
-    local getTime = settingValue[25]; if getTime ~= nil then setTime = getTime end
-    local getCRCScan = settingValue[26]; if getCRCScan ~= nil then setCRCScan = getCRCScan end
-    local getShowSysApps = settingValue[27]; if getShowSysApps ~= nil then showSysApps = getShowSysApps end
-    local getPSPExtractBG = settingValue[28]; if getPSPExtractBG ~= nil then setPSPExtractBG = getPSPExtractBG end
-    getUseEmu4Vita = settingValue[29]; if getUseEmu4Vita ~= nil then setUseEmu4Vita = getUseEmu4Vita end
-    -- settingValue[29] is startup collection 
+    local function apply_numeric_config(key, setter)
+        local value = config_map[key]
+        if value ~= nil and value ~= "" then
+            local number = tonumber(value)
+            if number ~= nil then
+                setter(number)
+            end
+        end
+    end
+
+    apply_numeric_config("Reflections", function(v) setReflections = v end)
+    apply_numeric_config("Sounds", function(v) setSounds = v end)
+    apply_numeric_config("Color", function(v) themeColor = v end)
+    apply_numeric_config("Background", function(v) setBackground = v end)
+    apply_numeric_config("Language", function(v) setLanguage = v end)
+    apply_numeric_config("View", function(v) showView = v end)
+    apply_numeric_config("Homebrews", function(v) showHomebrews = v end)
+    apply_numeric_config("Scan", function(v) startupScan = v end)
+    apply_numeric_config("Category", function(v) startCategory = v end)
+    apply_numeric_config("Recent", function(v) showRecentlyPlayed = v end)
+    apply_numeric_config("All", function(v) showAll = v end)
+    apply_numeric_config("Adrenaline_rom_location", function(v) Adrenaline_roms = v end)
+    apply_numeric_config("Game_Backgrounds", function(v) Game_Backgrounds = v end)
+    apply_numeric_config("Music", function(v) setMusic = v end)
+    apply_numeric_config("Music_Shuffle", function(v) setMusicShuffle = v end)
+    apply_numeric_config("Swap_X_O_buttons", function(v) setSwap_X_O_buttons = v end)
+    apply_numeric_config("Adrenaline_PS_Button", function(v) setAdrPSButton = v end)
+    apply_numeric_config("Show_hidden_games", function(v) showHidden = v end)
+    apply_numeric_config("Show_collections", function(v) showCollections = v end)
+    apply_numeric_config("Filter_Games", function(v) filterGames = v end)
+    apply_numeric_config("Show_missing_covers", function(v) showMissingCovers = v end)
+    apply_numeric_config("Smooth_scrolling", function(v) smoothScrolling = v end)
+    apply_numeric_config("Two_D_views", function(v) set2DViews = v end)
+    apply_numeric_config("Change_views", function(v) setChangeViews = v end)
+    apply_numeric_config("Time", function(v) setTime = v end)
+    apply_numeric_config("CRC", function(v) setCRCScan = v end)
+    apply_numeric_config("Show_System_Apps", function(v) showSysApps = v end)
+    apply_numeric_config("Extract_PSP_backgrounds", function(v) setPSPExtractBG = v end)
+    apply_numeric_config("Use_Emu4Vita", function(v) setUseEmu4Vita = v end)
 
     selectedwall = setBackground
 
-
-    -- Get startup collection table name
-    if string.match(str, "Startup_Collection=Collection_") then
-        str_minus_preceding_setting = str:match("Startup_Collection..+$")
-        startCategory_collection = str_minus_preceding_setting:gsub("Startup_Collection=", ""):gsub(" /n..+", "")
+    local saved_startup_collection = config_map["Startup_Collection"]
+    if saved_startup_collection ~= nil and saved_startup_collection ~= "" then
+        startCategory_collection = saved_startup_collection
     end
 
 

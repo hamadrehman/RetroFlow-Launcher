@@ -8,6 +8,7 @@ Original project and primary credit remain with `jimbob4000`. This fork only add
 
 - `RetroFlow_emu4vita.vpk` for the RetroFlow + Emu4Vita++ setup
 - a RetroFlow build that lets you choose Emu4Vita++ cores from the UI
+- a persistent Emu4Vita++ launch toggle that is respected even when RetroArch is installed
 - platform-to-core mapping saved in `ux0:/data/RetroFlow/emu4vita_core_map.lua`
 - launch handoff that is intended to pair with the matching Emu4Vita++ fork
 
@@ -17,6 +18,7 @@ If you want stock RetroFlow behavior, use the upstream project instead.
 
 - launches supported retro systems through Emu4Vita++
 - adds a user-facing Emu4Vita++ core mapping screen under `Other Settings`
+- fixes the global Emu4Vita++ launch toggle so it persists correctly in `config.dat`
 - saves platform-to-core mappings in `ux0:/data/RetroFlow/emu4vita_core_map.lua`
 - adds safer URI/path encoding for ROM launch handoff
 - adds missing-core validation and clearer launch failure messaging
