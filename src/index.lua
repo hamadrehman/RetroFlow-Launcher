@@ -1509,7 +1509,8 @@ if not System.doesFileExist(background_dir .. "Grey.png") then System.copyFile("
 
 -- EMULATOR CORE MANAGEMENT
 
-    enableEmu4Vita = false
+    setUseEmu4Vita = 1 -- Prefer Emu4Vita++ cores by default when available.
+    enableEmu4Vita = true
 
     CoreDefinitions = {
 
@@ -2160,6 +2161,11 @@ if not System.doesFileExist(background_dir .. "Grey.png") then System.copyFile("
 
     function get_core_sort_rank(system_id, core_id)
         local core_info = CoreDefinitions and CoreDefinitions[core_id]
+        if setUseEmu4Vita == 1 and core_id == (RecommendedCoresEmu4 and RecommendedCoresEmu4[system_id]) then
+            return 1
+        elseif setUseEmu4Vita == 1 and core_info and core_info.emulator == "emu4vita" then
+            return 2
+        end
         if core_id == (RecommendedCores and RecommendedCores[system_id]) then
             return 1
         elseif core_info and core_info.emulator == "retroarch" then
@@ -2212,6 +2218,17 @@ if not System.doesFileExist(background_dir .. "Grey.png") then System.copyFile("
 
     function GetCurrentSystemCore(system_id)
         return GlobalCoreOverrides[system_id] or RecommendedCores[system_id]
+    end
+
+    function GetPreferredRecommendedCore(system_id)
+        if setUseEmu4Vita == 1
+            and RecommendedCoresEmu4
+            and RecommendedCoresEmu4[system_id]
+            and CoreDefinitions
+            and CoreDefinitions[RecommendedCoresEmu4[system_id]] then
+            return RecommendedCoresEmu4[system_id]
+        end
+        return RecommendedCores and RecommendedCores[system_id]
     end
 
     local global_core_config_file = cur_dir .. "/Emulator cores global.lua"
@@ -2371,7 +2388,7 @@ if not System.doesFileExist(background_dir .. "Grey.png") then System.copyFile("
     function reset_global_core_overrides()
         GlobalCoreOverrides = {}
         for system_id, core_id in pairs(RecommendedCores or {}) do
-            GlobalCoreOverrides[system_id] = core_id
+            GlobalCoreOverrides[system_id] = GetPreferredRecommendedCore(system_id) or core_id
         end
         save_global_core_overrides()
     end
@@ -2562,9 +2579,6 @@ if not System.doesFileExist(background_dir .. "Grey.png") then System.copyFile("
             end
         end
     end
-
-    load_core_settings()
-    rebuild_legacy_core_tables()
 
 -- Launcher App Directory
 -- local launch_dir_adr = "ux0:/app/RETROLNCR/"
@@ -3234,6 +3248,7 @@ function SaveSettings()
         "\nExtract_PSP_backgrounds=" .. setPSPExtractBG .. " " .. 
         "\nShow_cores=" .. setShowCores .. " " .. 
         "\nScan_cartridges" .. setScanCartridges .. " " .. 
+        "\nUse_Emu4Vita=" .. setUseEmu4Vita .. " " ..
         "\nStartup_Collection=" .. startCategory_collection -- MUST ALWAYS BE LAST -- the config is split into a table using number values which this setting does not have. Need to add proper ini file reading
 
         file_config:write(settings)
@@ -3302,6 +3317,13 @@ if System.doesFileExist(cur_dir .. "/config.dat") then
     local getPSPExtractBG = settingValue[28]; if getPSPExtractBG ~= nil then setPSPExtractBG = getPSPExtractBG end
     local getShowCores = settingValue[29]; if getShowCores ~= nil then setShowCores = getShowCores end
     local getScanCartridges = settingValue[30]; if getScanCartridges ~= nil then setScanCartridges = getScanCartridges end
+    local getUseEmu4Vita = str:match("Use_Emu4Vita=(%-?%d+)")
+    if getUseEmu4Vita ~= nil then
+        setUseEmu4Vita = tonumber(getUseEmu4Vita)
+        if setUseEmu4Vita ~= 1 then
+            setUseEmu4Vita = 0
+        end
+    end
     -- settingValue[26] is startup collection 
 
     selectedwall = setBackground
@@ -3343,6 +3365,9 @@ else
 
     SaveSettings()
 end
+
+load_core_settings()
+rebuild_legacy_core_tables()
 
 -- Legacy fix - Languages got added bit by bit and were out of logical order.
     --These two lookups allow the menu to be reordered without affecting people's config files
@@ -3827,6 +3852,7 @@ local lang_default =
 ["Time_12hr"] = "12-Hour Clock",
 ["Time_24hr"] = "24-Hour Clock",
 ["Show_RetroArch_cores_colon"] = "Show RetroArch cores:",
+["Use_Emu4Vita_colon"] = "Use Emu4Vita++:",
 
 -- Game options
 ["Options"] = "Options",
@@ -3850,6 +3876,7 @@ local lang_default =
 ["Unhide_game"] = "Unhide game",
 ["Remove_from_recently_played"] = "Remove from recently played",
 ["Configure_game_in_DSVita"] = "Configure game in DSVita",
+["Test_Emu4Vita_launch"] = "Test Emu4Vita++ launch",
 
 -- Collections
 ["Collections"] = "Collections",
@@ -3885,6 +3912,7 @@ local lang_default =
 ["Emulator_not_installed_DSVita"] = "You need to install DSVita to play this game.",
 ["Emulator_not_installed_EasyRPG"] = "You need to install EasyRPG to play this game.",
 ["Emulator_not_installed_Emu4Vita"] = "You need to install Emu4Vita++ to play this game.",
+["Missing_Emu4Vita_core"] = "Missing Emu4Vita++ core:",
 ["Game_not_installed_rescan"] = "This game is not installed, please rescan your games.",
 ["Insert_cartridge_try_again"] = "Please insert the game cartridge and try again.",
 
@@ -5774,6 +5802,42 @@ function launch_emu4vita(def_core_name)
 
         if selected_core_file ~= nil then
             selected_core_file = string.gsub(selected_core_file, "^eboot_", "")
+            if not System.doesFileExist("ux0:/app/EMU4VPLUS/eboot_" .. selected_core_file .. ".self") then
+                status = System.getMessageState()
+                if status ~= RUNNING then
+                    System.setMessage(((lang_lines and lang_lines.Missing_Emu4Vita_core) or "Missing Emu4Vita++ core:") .. " eboot_" .. tostring(selected_core_file) .. ".self", false, BUTTON_OK)
+                end
+                goto continue
+            end
+            System.executeUri("psgm:play?titleid=EMU4VPLUS" .. "&core=" .. emu4_uri_encode(selected_core_file) .. "&rom=" .. emu4_uri_encode(rom_location))
+            System.exit()
+        end
+    end
+    ::continue::
+end
+
+function launch_emu4vita_core_id(core_id)
+    check_app_installed("EMU4VPLUS", lang_lines.Emulator_not_installed_Emu4Vita)
+    if launch_check_app_installed == false then
+        goto continue
+    end
+
+    check_game_available(rom_location)
+
+    if launch_check_game_available == true then
+        local core_definition = core_id and CoreDefinitions and CoreDefinitions[core_id]
+        local selected_core_file = core_definition and core_definition.core_file
+
+        if selected_core_file ~= nil then
+            prepare_for_launch()
+            selected_core_file = string.gsub(selected_core_file, "^eboot_", "")
+            if not System.doesFileExist("ux0:/app/EMU4VPLUS/eboot_" .. selected_core_file .. ".self") then
+                status = System.getMessageState()
+                if status ~= RUNNING then
+                    System.setMessage(((lang_lines and lang_lines.Missing_Emu4Vita_core) or "Missing Emu4Vita++ core:") .. " eboot_" .. tostring(selected_core_file) .. ".self", false, BUTTON_OK)
+                end
+                goto continue
+            end
             System.executeUri("psgm:play?titleid=EMU4VPLUS" .. "&core=" .. emu4_uri_encode(selected_core_file) .. "&rom=" .. emu4_uri_encode(rom_location))
             System.exit()
         end
@@ -18627,7 +18691,7 @@ while true do
         Graphics.fillRect(60, 900, 82 + (menuY * 47), 129 + (menuY * 47), themeCol)-- selection
 
 
-        menuItems = 7
+        menuItems = 8
 
         -- MENU 19 / #0 Back
         Font.print(fnt22, setting_x, setting_y0, lang_lines.Back_Chevron, white)--Back
@@ -18678,8 +18742,16 @@ while true do
         Font.print(fnt22, setting_x, setting_y6, lang_lines.Edit_collections, white)--Edit collections
 
         
-        -- MENU 19 / #7 Global core settings
-        Font.print(fnt22, setting_x, setting_y7, lang_lines.Global_core_settings, white)--Global core settings
+        -- MENU 19 / #7 Use Emu4Vita++
+        Font.print(fnt22, setting_x, setting_y7, lang_lines.Use_Emu4Vita_colon, white)--Use Emu4Vita++:
+        if setUseEmu4Vita == 1 then
+            Font.print(fnt22, setting_x_offset, setting_y7, lang_lines.On, white)--ON
+        else
+            Font.print(fnt22, setting_x_offset, setting_y7, lang_lines.Off, white)--OFF
+        end
+
+        -- MENU 19 / #8 Global core settings
+        Font.print(fnt22, setting_x, setting_y8, lang_lines.Global_core_settings, white)--Global core settings
 
         -- MENU 19 - FUNCTIONS
         status = System.getMessageState()
@@ -18764,7 +18836,16 @@ while true do
                     showMenu = 24 
                     menuY = 0
                 
-                elseif menuY == 7 then -- #7 Change emulator cores
+                elseif menuY == 7 then -- #7 Use Emu4Vita++
+                    if setUseEmu4Vita == 1 then
+                        setUseEmu4Vita = 0
+                    else
+                        setUseEmu4Vita = 1
+                    end
+                    reset_global_core_overrides()
+                    rebuild_legacy_core_tables()
+
+                elseif menuY == 8 then -- #8 Change emulator cores
                     showMenu = 28 
                     menuY = 0
                 end
@@ -18874,6 +18955,17 @@ while true do
                 menuItems = menuItems + 1
             end
 
+            local emu4_test_menu_index = nil
+            local emu4_test_system_id = get_system_id_for_app_type(apptype)
+            if emu4_test_system_id ~= nil
+                and RecommendedCoresEmu4
+                and RecommendedCoresEmu4[emu4_test_system_id]
+                and CoreDefinitions
+                and CoreDefinitions[RecommendedCoresEmu4[emu4_test_system_id]] then
+                menuItems = menuItems + 1
+                emu4_test_menu_index = menuItems
+            end
+
             -- Calculate vertical centre
             vertically_centre_mini_menu(menuItems)
 
@@ -18913,6 +19005,10 @@ while true do
             Font.print(fnt22, setting_x, setting_y0 + y_centre_text_offset, lang_lines.Remove_from_favorites, white)--Remove from favourites
         else
             Font.print(fnt22, setting_x, setting_y0 + y_centre_text_offset, lang_lines.Add_to_favorites, white)--Add to favourites
+        end
+
+        if emu4_test_menu_index ~= nil then
+            Font.print(fnt22, setting_x, setting_y0 + (emu4_test_menu_index * 47) + y_centre_text_offset, lang_lines.Test_Emu4Vita_launch, white)
         end
 
         -- MENU 20 / #1 Rename
@@ -19089,6 +19185,15 @@ while true do
                                 else
                                 end
                             end
+                        end
+                    end
+
+                    function dynamic_menu_test_emu4vita()
+                        local test_system_id = get_system_id_for_app_type(apptype)
+                        local test_core_id = test_system_id and RecommendedCoresEmu4 and RecommendedCoresEmu4[test_system_id]
+                        if test_core_id ~= nil then
+                            rom_location = xCatLookup(showCat)[p].game_path
+                            launch_emu4vita_core_id(test_core_id)
                         end
                     end
 
@@ -19312,6 +19417,8 @@ while true do
                 elseif menuY == 3 then 
                     showMenu = 22 -- Add to collection
                     menuY = 0
+                elseif emu4_test_menu_index ~= nil and menuY == emu4_test_menu_index then
+                    dynamic_menu_test_emu4vita()
                 elseif menuY == 4 then 
                     -- Dynamic menu
                     if remove_from_collection_flag == true then
@@ -21418,10 +21525,10 @@ while true do
             if (Controls.check(pad, SCE_CTRL_CROSS_MAP) and not Controls.check(oldpad, SCE_CTRL_CROSS_MAP)) then
                 if menuY == 0 then -- #0 Back
                     showMenu = 19
-                    menuY = 6 -- Other Settings
+                    menuY = 8 -- Global core settings
                 elseif menuY == 3 then -- #3 Reset to recommended core
-                    if emulator_core_settings_system_id and RecommendedCores[emulator_core_settings_system_id] then
-                        set_global_core_for_system(emulator_core_settings_system_id, RecommendedCores[emulator_core_settings_system_id])
+                    if emulator_core_settings_system_id and GetPreferredRecommendedCore(emulator_core_settings_system_id) then
+                        set_global_core_for_system(emulator_core_settings_system_id, GetPreferredRecommendedCore(emulator_core_settings_system_id))
                         rebuild_legacy_core_tables()
                     end
                 elseif menuY == 4 then -- #4 Restore all recommended cores
@@ -21489,7 +21596,7 @@ while true do
             elseif Controls.check(pad, SCE_CTRL_CIRCLE_MAP) and not Controls.check(oldpad, SCE_CTRL_CIRCLE_MAP) then
                 oldpad = pad
                 showMenu = 19
-                menuY = 7
+                menuY = 8
             end
             
         end
