@@ -361,4 +361,8 @@ return {
 ["Failed_Full_Reset"] = "Не удалось создать папку резервной копии.",
 ["No_Data_Folder"] = "Папка данных RetroFlow не найдена.",
 
+["Use_Emu4Vita_colon"] = "Use Emu4Vita++:",
+["Test_Emu4Vita_launch"] = "Test Emu4Vita++ launch",
+["Missing_Emu4Vita_core"] = "Missing Emu4Vita++ core:",
+
 }

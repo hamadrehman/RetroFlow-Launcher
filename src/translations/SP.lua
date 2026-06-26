@@ -361,4 +361,8 @@ return {
 ["Failed_Full_Reset"] = "No se pudo crear la carpeta de copia de seguridad.",
 ["No_Data_Folder"] = "No se encontró la carpeta de datos de RetroFlow.",
 
+["Use_Emu4Vita_colon"] = "Use Emu4Vita++:",
+["Test_Emu4Vita_launch"] = "Test Emu4Vita++ launch",
+["Missing_Emu4Vita_core"] = "Missing Emu4Vita++ core:",
+
 }

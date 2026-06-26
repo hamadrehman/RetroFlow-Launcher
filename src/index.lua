@@ -4120,10 +4120,16 @@ function ChangeLanguage(def)
         langfile = {}
         langfile = "app0:/translations/" .. lang
         -- lang_lines = {}
-        lang_lines = dofile(langfile)
+        lang_lines = dofile(langfile) or {}
     else
         -- If missing use default EN table
         lang_lines = lang_default
+    end
+
+    for key, value in pairs(lang_default) do
+        if lang_lines[key] == nil then
+            lang_lines[key] = value
+        end
     end
 
     if setLanguage == 2 or setLanguage == 3 or setLanguage == 5 or setLanguage == 6 or setLanguage == 8 or setLanguage == 9 or setLanguage == 12 or setLanguage == 16 or setLanguage == 19 or setLanguage == 20 or setLanguage == 21 then

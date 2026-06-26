@@ -363,4 +363,8 @@ return {
 ["Failed_Full_Reset"] = "Nie można utworzyć folderu kopii zapasowej.",
 ["No_Data_Folder"] = "Nie znaleziono folderu danych RetroFlow.",
 
+["Use_Emu4Vita_colon"] = "Use Emu4Vita++:",
+["Test_Emu4Vita_launch"] = "Test Emu4Vita++ launch",
+["Missing_Emu4Vita_core"] = "Missing Emu4Vita++ core:",
+
 }

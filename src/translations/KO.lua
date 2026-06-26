@@ -362,4 +362,8 @@ return {
 ["Failed_Full_Reset"] = "백업 폴더를 생성할 수 없습니다.",
 ["No_Data_Folder"] = "RetroFlow 데이터 폴더를 찾을 수 없습니다.",
 
+["Use_Emu4Vita_colon"] = "Use Emu4Vita++:",
+["Test_Emu4Vita_launch"] = "Test Emu4Vita++ launch",
+["Missing_Emu4Vita_core"] = "Missing Emu4Vita++ core:",
+
 }

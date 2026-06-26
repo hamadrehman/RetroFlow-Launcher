@@ -361,4 +361,8 @@ return {
 ["Failed_Full_Reset"] = "Kunne ikke opprette sikkerhetskopimappen.",
 ["No_Data_Folder"] = "RetroFlow-datamappen ble ikke funnet.",
 
+["Use_Emu4Vita_colon"] = "Use Emu4Vita++:",
+["Test_Emu4Vita_launch"] = "Test Emu4Vita++ launch",
+["Missing_Emu4Vita_core"] = "Missing Emu4Vita++ core:",
+
 }

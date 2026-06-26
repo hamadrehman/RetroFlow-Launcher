@@ -361,4 +361,8 @@ return {
 ["Failed_Full_Reset"] = "Não foi possível criar a pasta de backup.",
 ["No_Data_Folder"] = "A pasta de dados do RetroFlow não foi encontrada.",
 
+["Use_Emu4Vita_colon"] = "Use Emu4Vita++:",
+["Test_Emu4Vita_launch"] = "Test Emu4Vita++ launch",
+["Missing_Emu4Vita_core"] = "Missing Emu4Vita++ core:",
+
 }
